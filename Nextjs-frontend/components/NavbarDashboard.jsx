@@ -1,4 +1,3 @@
-
 import ThemeToggle from '@/components/Modo_Oscuro_claro'
 
 export default function NavbarDashboard() {
