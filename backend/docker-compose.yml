@@ -1,0 +1,27 @@
+
+services:
+
+  kpis:
+    build: ./Kpis
+    ports:
+      - "8002:8080"
+    networks:
+      - dashboard_net
+
+  ventas:
+    build: ./Ventas
+    ports:
+      - "8003:8080"
+    networks:
+      - dashboard_net
+  
+  resutados:
+    build: ./Resultados
+    ports:
+      - "8004:8080"
+    networks:
+      - dashboard_net
+
+networks:
+  dashboard_net:
+    driver: bridge

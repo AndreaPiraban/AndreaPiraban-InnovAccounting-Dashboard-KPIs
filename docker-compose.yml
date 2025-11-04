@@ -1,0 +1,50 @@
+version: "3.9"
+
+services:
+  # --- Backend ---
+  kpis:
+    build: ./backend/Kpis
+    container_name: kpis
+    ports:
+      - "8002:8080"
+    networks:
+      - app_net
+
+  ventas:
+    build: ./backend/Ventas
+    container_name: ventas
+    ports:
+      - "8003:8080"
+    networks:
+      - app_net
+  
+  resultados:
+    build: ./backend/Resultados
+    container_name: resultados
+    ports:
+      - "8004:8080"
+    networks:
+      - app_net
+
+  # --- Frontend ---
+  # --- Frontend ---
+  nextjs_frontend:
+    build: ./Nextjs-frontend
+    container_name: nextjs_frontend
+    ports:
+      - "80:3000"
+    depends_on:
+      - kpis
+      - ventas
+      - resultados
+    environment:
+      # Variables disponibles en el frontend (Next.js)
+      - NEXT_PUBLIC_API_KPIS=http://kpis:8080
+      - NEXT_PUBLIC_API_VENTAS=http://ventas:8080
+      - NEXT_PUBLIC_API_RESULTADOS=http://resultados:8080
+    networks:
+      - app_net
+
+networks:
+  app_net:
+    driver: bridge

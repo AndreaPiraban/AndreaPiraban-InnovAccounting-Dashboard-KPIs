@@ -1,0 +1,21 @@
+# Imagen base
+FROM golang:1.24.6-alpine
+
+# Crea el directorio de la app
+WORKDIR /app
+
+# Copia los archivos del módulo
+COPY go.mod ./
+COPY . .
+
+# Copia el archivo de datos
+COPY Ventas.xlsx ./Ventas.xlsx
+
+# Compila el binario
+RUN go build -o ventas main.go
+
+# Expone el puerto
+EXPOSE 8003
+
+# Comando para ejecutar el servicio
+CMD ["./ventas"]

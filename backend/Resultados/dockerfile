@@ -1,0 +1,18 @@
+# Imagen base
+FROM golang:1.24.6-alpine
+
+# Crea el directorio de la app
+WORKDIR /app
+
+# Copia los archivos del módulo
+COPY go.mod ./
+COPY . .
+
+# Compila el binario
+RUN go build -o resultados main.go
+
+# Expone el puerto
+EXPOSE 8004
+
+# Comando para ejecutar el servicio
+CMD ["./resultados"]
