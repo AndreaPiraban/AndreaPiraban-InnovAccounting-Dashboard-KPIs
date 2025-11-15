@@ -21,6 +21,7 @@ export default function Sidebar() {
 
             {/* Texto */}
             <span className="ml-3">Dashboard</span>
+            
           </a>
         </li>
 

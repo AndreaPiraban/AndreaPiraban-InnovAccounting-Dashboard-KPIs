@@ -5,7 +5,7 @@ export default function ThemeToggle() {
   const [isDark, setIsDark] = useState(false);
 
   useEffect(() => {
-    if (typeof window === 'undefined') return; // 👈 evita que se ejecute en SSR
+    if (typeof window === 'undefined') return; // 
 
     const storedTheme = localStorage.getItem('color-theme');
     const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
