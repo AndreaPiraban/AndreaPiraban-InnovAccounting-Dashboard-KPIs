@@ -26,7 +26,14 @@ services:
     networks:
       - app_net
 
-  # --- Frontend ---
+  registro:
+    build: ./backend/Registro
+    container_name: registro
+    ports:
+      - "8005:8080"
+    networks:
+      - app_net
+
   # --- Frontend ---
   nextjs_frontend:
     build: ./Nextjs-frontend
@@ -37,14 +44,16 @@ services:
       - kpis
       - ventas
       - resultados
+      - registro
     environment:
-      # Variables disponibles en el frontend (Next.js)
       - NEXT_PUBLIC_API_KPIS=http://kpis:8080
       - NEXT_PUBLIC_API_VENTAS=http://ventas:8080
       - NEXT_PUBLIC_API_RESULTADOS=http://resultados:8080
+      - NEXT_PUBLIC_API_REGISTRO=http://registro:8080
     networks:
       - app_net
 
 networks:
   app_net:
     driver: bridge
+

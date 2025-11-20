@@ -1,0 +1,27 @@
+# Imagen base
+FROM golang:1.24.6-alpine
+
+# Crear directorio de trabajo
+WORKDIR /app
+
+# Crear carpeta para la base de datos
+RUN mkdir -p /app/data
+
+# Copiar go.mod y go.sum
+COPY go.mod ./
+COPY go.sum ./
+
+# Descargar dependencias
+RUN go mod download
+
+# Copiar el resto del código
+COPY . .
+
+# Compilar el binario del servicio Auth
+RUN go build -o auth main.go
+
+# Exponer el puerto del servicio
+EXPOSE 8005
+
+# Ejecutar el servicio
+CMD ["./auth"]

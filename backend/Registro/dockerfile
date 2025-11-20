@@ -1,0 +1,29 @@
+# Imagen base ligera con Go
+FROM golang:1.24.6-alpine
+
+# Directorio de trabajo de la aplicación
+WORKDIR /app
+
+# Copiar los archivos del módulo
+COPY go.mod go.sum ./
+
+# Instalar dependencias
+RUN go mod download
+
+# Copiar el resto del proyecto
+COPY . .
+
+# Crear carpeta que será usada como volumen compartido
+RUN mkdir -p /app/data
+
+# Copiar la base de datos inicial dentro del volumen
+COPY usuarios.db /app/data/usuarios.db
+
+# Compilar el binario con el nombre solicitado
+RUN go build -o Registro main.go
+
+# Exponer el puerto solicitado
+EXPOSE 8005
+
+# Ejecutar el servicio
+CMD ["./Registro"]

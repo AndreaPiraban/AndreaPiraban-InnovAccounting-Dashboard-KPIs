@@ -1,8 +1,7 @@
-
 services:
-
   kpis:
     build: ./Kpis
+    container_name: kpis
     ports:
       - "8002:8080"
     networks:
@@ -10,17 +9,47 @@ services:
 
   ventas:
     build: ./Ventas
+    container_name: ventas
     ports:
       - "8003:8080"
     networks:
       - dashboard_net
   
-  resutados:
+  resultados:
     build: ./Resultados
+    container_name: resultados
     ports:
       - "8004:8080"
     networks:
       - dashboard_net
+
+  auth:
+    build: ./Auth
+    container_name: auth
+    volumes:
+      - usuarios_db:/app/data
+    ports:
+      - "8005:8080"
+    networks:
+      - dashboard_net
+
+  registro:
+    build: ./Registro
+    container_name: registro
+    volumes:
+      - usuarios_db:/app/data
+    ports:
+      - "8006:8080"
+    networks:
+      - dashboard_net
+
+volumes:
+  usuarios_db:
+    driver: local
+    driver_opts:
+      type: "none"
+      o: "bind"
+      device: "./data"
 
 networks:
   dashboard_net:
