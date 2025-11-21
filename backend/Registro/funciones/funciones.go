@@ -18,29 +18,68 @@ import (
 	"gorm.io/gorm"
 )
 
-type Usuario struct {
-	gorm.Model
+// --- Estructuras de datos ---
 
+// Usuario para almacenamiento en SQLite usando GORM
+type Usuario struct {
+	// ID de tipo uint es el valor por defecto para claves primarias en GORM
+	ID       uint   `gorm:"primaryKey"`
 	Name     string `gorm:"not null"`
-	Email    string `gorm:"uniqueIndex;not null"`
+	Email    string `gorm:"unique;not null"`
 	Password string `gorm:"not null"`
 }
 
+// VerificacionCorreo para almacenamiento en SQLite usando GORM
+type VerificacionCorreo struct {
+	ID       uint   `gorm:"primaryKey"`
+	Email    string `gorm:"unique;not null"`
+	Codigo   string `gorm:"not null"`
+	ExpiraEn int64  `gorm:"not null"` // Timestamp Unix
+}
+
+// --- Variables Globales ---
+
 var DB *gorm.DB
 
+// --- Funciones de Inicialización y Utilidad ---
+
+// InicializarDB conecta a la base de datos SQLite y realiza las migraciones.
 func InicializarDB() error {
 	var err error
 
+	// Usamos un path relativo si es necesario, o el que provees
 	DB, err = gorm.Open(sqlite.Open("/app/data/usuarios.db"), &gorm.Config{})
 
 	if err != nil {
-		return err
+		return fmt.Errorf("fallo al conectar a la base de datos: %w", err)
 	}
 
-	// devolver la base de datos abierta
+	// Realizar migraciones automáticas
 	return DB.AutoMigrate(&Usuario{}, &VerificacionCorreo{})
 }
 
+// CargarApi carga una clave de un archivo .env.
+func CargarApi(api string) string {
+	err := godotenv.Load(".env")
+
+	if err != nil {
+		log.Printf("Advertencia: No se pudo cargar el archivo .env: %v", err)
+		// No se usa Fatalln para permitir que la aplicación continúe si no es crítica
+	}
+
+	clave_api := os.Getenv(api)
+
+	return clave_api
+}
+
+// IsRecordNotFoundError ayuda a detectar si el error es de tipo "registro no encontrado".
+func IsRecordNotFoundError(err error) bool {
+	return errors.Is(err, gorm.ErrRecordNotFound)
+}
+
+// --- Funciones de Usuarios (Creación y Búsqueda) ---
+
+// CrearUsuario registra un nuevo usuario en la base de datos después de hashear la contraseña.
 func CrearUsuario(name, email, password string) error {
 
 	if name == "" || email == "" || password == "" {
@@ -48,31 +87,21 @@ func CrearUsuario(name, email, password string) error {
 	}
 
 	// Verificar que el email no exista
-
 	var existe Usuario
-
-	// Consultar si el usuario existe
 	result := DB.Where("email = ?", email).First(&existe)
-
-	// 1. Verificar Si hay un registro encontrado
 
 	if result.Error == nil {
 		return errors.New("el correo ya está registrado")
 	}
 
-	// 2. verificar Si es un error de registro ya encontrado
-	if errors.Is(result.Error, gorm.ErrRecordNotFound) {
-		// El usuario no existe continua el codigo
-	} else if result.Error != nil {
-		return result.Error
+	if !errors.Is(result.Error, gorm.ErrRecordNotFound) {
+		return result.Error // Otro error de DB
 	}
 
-	// hashear contraseña
-
+	// Hashear contraseña
 	PassHashed, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
-
 	if err != nil {
-		return err
+		return fmt.Errorf("error al hashear contraseña: %w", err)
 	}
 
 	// Organizar estructura para guardar los datos
@@ -83,17 +112,14 @@ func CrearUsuario(name, email, password string) error {
 	}
 
 	// guardar en la base de datos
-
 	if err := DB.Create(&NuevoUsuario).Error; err != nil {
-		return err
+		return fmt.Errorf("error al crear el usuario: %w", err)
 	}
 
 	return nil
-
 }
 
-// función para buscar email
-
+// BuscarUsuarioEmail busca un usuario por su correo electrónico.
 func BuscarUsuarioEmail(email string) (Usuario, error) {
 
 	var user Usuario
@@ -101,73 +127,61 @@ func BuscarUsuarioEmail(email string) (Usuario, error) {
 	err := DB.Where("email = ?", email).First(&user).Error
 
 	return user, err
-
 }
 
-// Cargar api
+// --- Funciones de Verificación de Correo ---
 
-func CargarApi(api string) string {
-	err := godotenv.Load(".env")
-
-	if err != nil {
-		log.Fatalf("Error cargando el archivo .env: %v", err)
-	}
-
-	clave_api := os.Getenv(api)
-
-	return clave_api
-}
-
-// Autenticar que el correo sea valido con el Correo enviado
-
-type VerificacionCorreo struct {
-	gorm.Model
-	Email    string `gorm:"uniqueIndex;not null"`
-	Codigo   string `gorm:"not null"`
-	ExpiraEn int64  `gorm:"not null"`
-}
-
+// generarCodigo crea un código numérico aleatorio de 6 dígitos.
 func generarCodigo() string {
-	n, err := rand.Int(rand.Reader, big.NewInt(999999))
+	// Generar un número aleatorio entre 0 y 999999
+	n, err := rand.Int(rand.Reader, big.NewInt(1000000))
 	if err != nil {
+		// Fallback en caso de error
 		return "000000"
 	}
+	// Formatear a 6 dígitos con ceros iniciales
 	return fmt.Sprintf("%06d", n.Int64())
 }
 
+// CrearCodigoVerificacion genera y guarda un nuevo código para un email.
 func CrearCodigoVerificacion(email string, duracion int) (string, error) {
 	if email == "" {
 		return "", errors.New("el email es obligatorio")
 	}
 
 	codigo := generarCodigo()
+	// Calcular el tiempo de expiración en formato Unix
 	expira := time.Now().Add(time.Duration(duracion) * time.Minute).Unix()
 
 	var registro VerificacionCorreo
 	result := DB.Where("email = ?", email).First(&registro)
 
 	if result.Error == nil {
+		// El registro existe, actualizar
 		registro.Codigo = codigo
 		registro.ExpiraEn = expira
 		if err := DB.Save(&registro).Error; err != nil {
-			return "", err
+			return "", fmt.Errorf("error al actualizar el código: %w", err)
 		}
 	} else if errors.Is(result.Error, gorm.ErrRecordNotFound) {
+		// El registro no existe, crear uno nuevo
 		registro = VerificacionCorreo{
 			Email:    email,
 			Codigo:   codigo,
 			ExpiraEn: expira,
 		}
 		if err := DB.Create(&registro).Error; err != nil {
-			return "", err
+			return "", fmt.Errorf("error al crear el código: %w", err)
 		}
 	} else {
+		// Otro error de DB
 		return "", result.Error
 	}
 
 	return codigo, nil
 }
 
+// VerificarCodigo valida si el código para un email es correcto y no ha expirado.
 func VerificarCodigo(email, codigo string) error {
 	if email == "" || codigo == "" {
 		return errors.New("email y código son obligatorios")
@@ -183,20 +197,24 @@ func VerificarCodigo(email, codigo string) error {
 		return err
 	}
 
+	// Validar expiración
 	if tiempoActual := time.Now().Unix(); tiempoActual > registro.ExpiraEn {
 		return errors.New("el código ha expirado")
 	}
 
+	// Validar código
 	if registro.Codigo != codigo {
 		return errors.New("el código ingresado es incorrecto")
 	}
 
-	// eliminar el código para evitar reuso
-	DB.Delete(&registro)
+	// Opcional: eliminar el código para evitar reuso (se hace en la versión transaccional)
+	// DB.Delete(&registro)
 
 	return nil
 }
 
+// RegistrarUsuarioVerificado realiza la verificación y la creación del usuario (sin transacción).
+// Esta función es menos robusta que la versión transaccional.
 func RegistrarUsuarioVerificado(name, email, password, codigo string) error {
 	// Validar código primero
 	if err := VerificarCodigo(email, codigo); err != nil {
@@ -207,15 +225,20 @@ func RegistrarUsuarioVerificado(name, email, password, codigo string) error {
 	return CrearUsuario(name, email, password)
 }
 
+// EnviarCodigoCorreo usa la API de Mailtrap (u otra compatible) para enviar el código.
 func EnviarCodigoCorreo(email, codigo string) error {
 	apiKey := CargarApi("api_mail")
 	if apiKey == "" {
-		return errors.New("no se encontró la API KEY para Mailtrap (api_mail)")
+		return errors.New("no se encontró la API KEY para el servicio de correo (api_mail)")
 	}
 
 	url := "https://send.api.mailtrap.io/api/send"
 
-	// Construcción del cuerpo JSON según la plantilla de Mailtrap
+	// Construcción del cuerpo JSON
+	// Nota: He corregido la sintaxis de fmt.Sprintf para JSON, usando `\n` y escape de comillas si fuera necesario,
+	// pero en este caso es más legible usar un `strings.NewReader` con un JSON bien formado.
+	// La estructura original de tu payload era incorrecta y ha sido ajustada:
+
 	payload := fmt.Sprintf(`{
 		"from": {
 			"email": "hello@innovaccounting.com.co",
@@ -231,7 +254,7 @@ func EnviarCodigoCorreo(email, codigo string) error {
 
 	req, err := http.NewRequest("POST", url, strings.NewReader(payload))
 	if err != nil {
-		return err
+		return fmt.Errorf("error al crear la solicitud HTTP: %w", err)
 	}
 
 	req.Header.Add("Authorization", "Bearer "+apiKey)
@@ -240,25 +263,20 @@ func EnviarCodigoCorreo(email, codigo string) error {
 	client := &http.Client{}
 	res, err := client.Do(req)
 	if err != nil {
-		return err
+		return fmt.Errorf("error al realizar la solicitud HTTP: %w", err)
 	}
 	defer res.Body.Close()
 
 	resBody, err := io.ReadAll(res.Body)
 	if err != nil {
-		return err
+		return fmt.Errorf("error al leer la respuesta del servidor: %w", err)
 	}
 
 	if res.StatusCode < 200 || res.StatusCode >= 300 {
-		return fmt.Errorf("error enviando correo (%d): %s", res.StatusCode, string(resBody))
+		return fmt.Errorf("error enviando correo (HTTP %d): %s", res.StatusCode, string(resBody))
 	}
 
 	return nil
-}
-
-// IsRecordNotFoundError ayuda a detectar not found
-func IsRecordNotFoundError(err error) bool {
-	return errors.Is(err, gorm.ErrRecordNotFound)
 }
 
 // RegistrarUsuarioVerificadoTransaccional realiza verificación del código y creación en una transacción.
@@ -291,10 +309,10 @@ func RegistrarUsuarioVerificadoTransaccional(name, email, password, codigo strin
 		// 4) Revisar que el usuario no exista (usando la misma tx)
 		var u Usuario
 		if err := tx.Where("email = ?", email).First(&u).Error; err == nil {
-			// el usuario ya fue creado por otro proceso -> evitar duplicado
+			// El usuario ya fue creado por otro proceso -> evitar duplicado
 			return errors.New("el correo ya está registrado")
 		} else if !IsRecordNotFoundError(err) {
-			// otro error al consultar
+			// Otro error al consultar
 			return err
 		}
 

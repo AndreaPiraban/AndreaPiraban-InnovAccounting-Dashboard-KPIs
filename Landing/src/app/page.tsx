@@ -20,9 +20,6 @@ export default function Home() {
       
       <Hero />
       <Features />
-      <Brands />
-      <Pricing />
-      <Blog />
       <Contact />
     </>
   );

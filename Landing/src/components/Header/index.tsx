@@ -49,7 +49,9 @@ const Header = () => {
       >
         <div className="container">
           <div className="relative -mx-4 flex items-center justify-between">
-            <div className="w-60 max-w-full px-4 xl:mr-12">
+            
+            {/* LOGO */}
+            <div className="px-2 xl:mr-4">
               <Link
                 href="/"
                 className={`header-logo block w-full ${
@@ -57,22 +59,25 @@ const Header = () => {
                 } `}
               >
                 <Image
-                  src="/images/logo/logo.svg"
+                  src="/images/logo/logov7.gif"
                   alt="logo"
-                  width={140}
-                  height={40}
-                  className="w-full dark:hidden"
+                  width={350}
+                  height={300}
+                  className="dark:hidden"
                 />
                 <Image
-                  src="/images/logo/logo.svg"
+                  src="/images/logo/logoDv4.gif"
                   alt="logo"
-                  width={140}
-                  height={40}
-                  className="hidden w-full dark:block h-full invert"
+                  width={350}
+                  height={300}
+                  className="hidden dark:block"
                 />
               </Link>
             </div>
+
             <div className="flex w-full items-center justify-between px-4">
+
+              {/* Mobile Menu Button */}
               <div>
                 <button
                   onClick={navbarToggleHandler}
@@ -96,6 +101,8 @@ const Header = () => {
                     }`}
                   />
                 </button>
+
+                {/* NAVBAR */}
                 <nav
                   id="navbarCollapse"
                   className={`navbar border-body-color/50 dark:border-body-color/20 dark:bg-dark absolute right-0 z-30 w-[250px] rounded border-[.5px] bg-white px-6 py-4 duration-300 lg:visible lg:static lg:w-auto lg:border-none lg:!bg-transparent lg:p-0 lg:opacity-100 ${
@@ -136,15 +143,16 @@ const Header = () => {
                                 </svg>
                               </span>
                             </p>
+
                             <div
                               className={`submenu dark:bg-dark relative top-full left-0 rounded-sm bg-white transition-[top] duration-300 group-hover:opacity-100 lg:invisible lg:absolute lg:top-[110%] lg:block lg:w-[250px] lg:p-4 lg:opacity-0 lg:shadow-lg lg:group-hover:visible lg:group-hover:top-full ${
                                 openIndex === index ? "block" : "hidden"
                               }`}
                             >
-                              {menuItem.submenu.map((submenuItem, index) => (
+                              {menuItem.submenu.map((submenuItem, idx) => (
                                 <Link
                                   href={submenuItem.path}
-                                  key={index}
+                                  key={idx}
                                   className="text-dark hover:text-primary block rounded-sm py-2.5 text-sm lg:px-3 dark:text-white/70 dark:hover:text-white"
                                 >
                                   {submenuItem.title}
@@ -158,6 +166,8 @@ const Header = () => {
                   </ul>
                 </nav>
               </div>
+
+              {/* Buttons + Theme */}
               <div className="flex items-center justify-end pr-16 lg:pr-0">
                 <Link
                   href="/signin"
@@ -175,6 +185,7 @@ const Header = () => {
                   <ThemeToggler />
                 </div>
               </div>
+
             </div>
           </div>
         </div>

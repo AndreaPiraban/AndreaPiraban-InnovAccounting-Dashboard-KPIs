@@ -1,0 +1,88 @@
+version: "3.9"
+
+services:
+  # ---------- BACKEND ----------
+  kpis:
+    build: ./backend/Kpis
+    container_name: kpis
+    ports:
+      - "8002:8080"
+    networks:
+      - dashboard_net
+
+  ventas:
+    build: ./backend/Ventas
+    container_name: ventas
+    ports:
+      - "8003:8080"
+    networks:
+      - dashboard_net
+
+  resultados:
+    build: ./backend/Resultados
+    container_name: resultados
+    ports:
+      - "8004:8080"
+    networks:
+      - dashboard_net
+
+  auth:
+    build: ./backend/Auth
+    container_name: auth
+    volumes:
+      - usuarios_db:/app/data
+    ports:
+      - "8005:8080"
+    networks:
+      - dashboard_net
+
+  registro:
+    build: ./backend/Registro
+    container_name: registro
+    volumes:
+      - usuarios_db:/app/data
+    ports:
+      - "8006:8080"
+    networks:
+      - dashboard_net
+
+  # ---------- FRONTEND (Landing) ----------
+  landing:
+    build: ./landing
+    container_name: landing
+    ports:
+      - "80:3000"
+    networks:
+      - dashboard_net
+    depends_on:
+      - auth
+      - registro
+      - kpis
+      - ventas
+      - resultados
+
+  dashboard:
+    build: ./Nextjs-frontend
+    container_name: dashboard
+    ports:
+      - "3000:3000"
+    networks:
+      - dashboard_net
+    depends_on:
+      - kpis
+      - ventas
+      - resultados
+
+# ---------- VOLUMES ----------
+volumes:
+  usuarios_db:
+    driver: local
+    driver_opts:
+      type: "none"
+      o: "bind"
+      device: "./backend/data"
+
+# ---------- NETWORKS ----------
+networks:
+  dashboard_net:
+    driver: bridge
