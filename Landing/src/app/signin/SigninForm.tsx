@@ -40,7 +40,7 @@ const SigninForm = () => {
         // Si no requiere verificación → viene el JWT directo
         if (!data.requiere_codigo) {
           localStorage.setItem("jwt", data.jwt);
-          window.location.href = "https://www.google.com";
+          window.location.href = "http://4.154.231.178/";
           return;
         }
 

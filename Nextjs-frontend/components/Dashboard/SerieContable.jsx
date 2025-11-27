@@ -17,7 +17,7 @@ export default function SerieContable() {
 
   useEffect(() => {
     async function fetchData() {
-      const res = await fetch("http://localhost:8004/serie-resultados");
+      const res = await fetch("http://52.156.92.46:8080/serie-resultados");
       const json = await res.json();
       const serie = json.data.map((d) => ({
         año: d.año,

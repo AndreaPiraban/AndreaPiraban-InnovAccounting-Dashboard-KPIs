@@ -1,5 +1,12 @@
 package funciones
 
+import (
+	"time"
+
+	"github.com/gin-contrib/cors"
+	"github.com/gin-gonic/gin"
+)
+
 // --- Indicadores Financieros ---
 func RazonCorriente(activoCorriente, pasivoCorriente float64) float64 {
 	return activoCorriente / pasivoCorriente
@@ -162,4 +169,25 @@ func ProcesosDigitalizados(digitalizados, totales float64) float64 {
 
 func ROIMarketing(beneficio, inversion float64) float64 {
 	return ((beneficio - inversion) / inversion) * 100
+}
+
+// Lista global de rutas permitidas
+var AllowedOrigins = []string{
+	"http://localhost:3001", // Landing
+	"http://localhost:3000", // Dashboard
+
+	"http://4.154.231.178", // Ip publica en azure
+
+}
+
+// Configuración global de CORS
+func CorsMiddleware() gin.HandlerFunc {
+	return cors.New(cors.Config{
+		AllowOrigins:     AllowedOrigins,
+		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
+		AllowHeaders:     []string{"Origin", "Content-Type", "Accept", "Authorization"},
+		ExposeHeaders:    []string{"Content-Length"},
+		AllowCredentials: true,
+		MaxAge:           12 * time.Hour,
+	})
 }

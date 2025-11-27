@@ -9,6 +9,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/gin-contrib/cors"
+	"github.com/gin-gonic/gin"
 	"github.com/glebarez/sqlite"
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/joho/godotenv"
@@ -219,4 +221,23 @@ func CrearJWT(email string) (string, error) {
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 	return token.SignedString(jwtSecret)
+}
+
+// Lista global de rutas permitidas
+var AllowedOrigins = []string{
+	"http://localhost:3001", // Landing
+	"http://localhost:3000", // Dashboard
+	"http://20.253.20.125/",
+}
+
+// Configuración global de CORS
+func CorsMiddleware() gin.HandlerFunc {
+	return cors.New(cors.Config{
+		AllowOrigins:     AllowedOrigins,
+		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
+		AllowHeaders:     []string{"Origin", "Content-Type", "Accept", "Authorization"},
+		ExposeHeaders:    []string{"Content-Length"},
+		AllowCredentials: true,
+		MaxAge:           12 * time.Hour,
+	})
 }

@@ -1,12 +1,22 @@
-FROM node:18 AS builder
+# Etapa 1: Builder
+FROM node:20-bullseye AS builder
 WORKDIR /app
+
 COPY package*.json ./
 RUN npm install
+
 COPY . .
 RUN npm run build
 
-FROM node:18 AS runner
+# Etapa 2: Runner mínimo
+FROM node:20-bullseye AS runner
 WORKDIR /app
-COPY --from=builder /app ./
+
+# Copiar solo lo necesario
+COPY --from=builder /app/package*.json ./
+COPY --from=builder /app/node_modules ./node_modules
+COPY --from=builder /app/.next ./.next
+COPY --from=builder /app/public ./public
+
 EXPOSE 80
 CMD ["npm", "start"]

@@ -10,7 +10,7 @@ export default function MainChart() {
 
   // 🔹 1. Obtener datos de la API
   useEffect(() => {
-    fetch('http://localhost:8003/Obtener_ventas')
+    fetch('http://20.237.62.163:8080/Obtener_ventas')
       .then(res => res.json())
       .then(json => setData(json))
       .catch(err => console.error('Error cargando ventas:', err));

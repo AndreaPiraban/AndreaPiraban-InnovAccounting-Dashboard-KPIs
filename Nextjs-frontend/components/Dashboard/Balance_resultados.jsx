@@ -22,7 +22,7 @@ export default function ResumenContable() {
     Math.abs(totalActivo - (Math.abs(totalPasivo) + Math.abs(totalPatrimonio))) < 1;
 
   const descargarExcel = async () => {
-    const res = await fetch("http://localhost:8004/descargar-excel");
+    const res = await fetch("http://52.156.92.46:8080/descargar-excel");
     const blob = await res.blob();
     const url = window.URL.createObjectURL(blob);
     const a = document.createElement("a");

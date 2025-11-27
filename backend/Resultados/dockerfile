@@ -1,18 +1,22 @@
-# Imagen base
-FROM golang:1.24.6-alpine
+# Etapa 1: Builder
+FROM golang:1.24.6-alpine AS builder
 
-# Crea el directorio de la app
 WORKDIR /app
 
-# Copia los archivos del módulo
-COPY go.mod ./
-COPY . .
+COPY go.mod go.sum ./
+RUN go mod download
 
-# Compila el binario
+COPY . .
 RUN go build -o resultados main.go
 
-# Expone el puerto
-EXPOSE 8004
 
-# Comando para ejecutar el servicio
+# Etapa 2: Imagen final mínima
+FROM alpine:3.20
+
+WORKDIR /app
+
+COPY --from=builder /app/resultados ./resultados
+
+EXPOSE 8080
+
 CMD ["./resultados"]

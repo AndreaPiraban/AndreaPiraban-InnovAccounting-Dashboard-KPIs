@@ -12,6 +12,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/gin-contrib/cors"
+	"github.com/gin-gonic/gin"
 	"github.com/glebarez/sqlite"
 	"github.com/joho/godotenv"
 	"golang.org/x/crypto/bcrypt"
@@ -339,5 +341,27 @@ func RegistrarUsuarioVerificadoTransaccional(name, email, password, codigo strin
 
 		// Si todo OK, la transacción hace commit
 		return nil
+	})
+}
+
+// Lista global de rutas permitidas
+var AllowedOrigins = []string{
+	"http://localhost:3001", // Landing
+	"http://localhost:3000", // Dashboard
+
+	"http://20.253.20.125/",
+
+	"http://4.154.231.178", // Ip publica dashboard
+}
+
+// Configuración global de CORS
+func CorsMiddleware() gin.HandlerFunc {
+	return cors.New(cors.Config{
+		AllowOrigins:     AllowedOrigins,
+		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
+		AllowHeaders:     []string{"Origin", "Content-Type", "Accept", "Authorization"},
+		ExposeHeaders:    []string{"Content-Length"},
+		AllowCredentials: true,
+		MaxAge:           12 * time.Hour,
 	})
 }

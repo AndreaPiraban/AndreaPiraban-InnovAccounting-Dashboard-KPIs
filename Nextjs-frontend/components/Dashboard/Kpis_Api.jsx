@@ -19,7 +19,7 @@ export default function KpiStats() {
   useEffect(() => {
     async function fetchKpis() {
       try {
-        const response = await fetch("http://localhost:8002/Calcular-kpis", {
+        const response = await fetch("http://4.236.208.178:8080/Calcular-kpis", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({

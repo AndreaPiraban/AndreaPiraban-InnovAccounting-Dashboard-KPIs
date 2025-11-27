@@ -1,21 +1,30 @@
-# Imagen base
-FROM golang:1.24.6-alpine
+# Etapa 1: Builder
+FROM golang:1.24.6-alpine AS builder
 
-# Crea el directorio de la app
 WORKDIR /app
 
-# Copia los archivos del módulo
-COPY go.mod ./
+# Copiar dependencias del módulo
+COPY go.mod go.sum ./
+RUN go mod download
+
+# Copiar todo el código
 COPY . .
 
-# Copia el archivo de datos
-COPY Ventas.xlsx ./Ventas.xlsx
-
-# Compila el binario
+# Compilar el servicio
 RUN go build -o ventas main.go
 
-# Expone el puerto
-EXPOSE 8003
 
-# Comando para ejecutar el servicio
+# Etapa 2: Imagen final mínima
+FROM alpine:3.20
+
+WORKDIR /app
+
+# Copiar el binario generado
+COPY --from=builder /app/ventas ./ventas
+
+# Copiar el archivo de datos requerido
+COPY Ventas.xlsx ./Ventas.xlsx
+
+EXPOSE 8080
+
 CMD ["./ventas"]

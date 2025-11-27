@@ -46,26 +46,23 @@ services:
     networks:
       - dashboard_net
 
-  # ---------- FRONTEND (Landing) ----------
+  # ---------- FRONTEND ----------
   landing:
     build: ./landing
     container_name: landing
     ports:
-      - "80:3000"
+      - "80:3001"
     networks:
       - dashboard_net
     depends_on:
       - auth
       - registro
-      - kpis
-      - ventas
-      - resultados
 
   dashboard:
     build: ./Nextjs-frontend
     container_name: dashboard
     ports:
-      - "3000:3000"
+      - "80:3000"
     networks:
       - dashboard_net
     depends_on:

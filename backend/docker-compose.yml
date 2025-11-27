@@ -49,7 +49,7 @@ volumes:
     driver_opts:
       type: "none"
       o: "bind"
-      device: "./data"
+      device: "./backend/data"
 
 networks:
   dashboard_net:
